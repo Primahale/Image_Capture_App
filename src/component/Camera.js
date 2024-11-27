@@ -10,6 +10,23 @@ const Camera = ({onCapture})=>{
     const [aspectRatio, setAspectRatio] = useState('16:9');
     const [isBlinking, setIsBlinking] = useState(false);
 
+     const checkCameras = async () => {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          const hasBackCamera = videoDevices.some(device => device.facing === 'environment');
+    
+          // If there's a back camera available, use it
+          setFacingMode(hasBackCamera ? 'environment' : 'user');
+        } catch (error) {
+          console.log('Error checking camera devices:', error);
+        }
+      };
+    
+      useEffect(() => {
+        checkCameras();
+      }, []);
+
     useEffect(() => {
         if (stream && videoRef.current) {
           videoRef.current.srcObject = stream;
