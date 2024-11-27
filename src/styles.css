@@ -1,0 +1,49 @@
+/* .App {
+    text-align: center;
+  }
+  
+  video {
+    width: 100%;
+    max-width: 640px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  
+  button {
+    margin: 10px;
+    padding: 10px 20px;
+  }
+
+  .controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: auto;
+  }
+  
+  .gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .gallery-item {
+    position: relative;
+    margin: 10px;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+  
+  .gallery-item img {
+    width: 150px;
+    height: 100px;
+    object-fit: cover;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .gallery-item:hover img {
+    transform: scale(1.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  }
+   */
