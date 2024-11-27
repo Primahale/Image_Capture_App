@@ -9,6 +9,7 @@ const Camera = ({onCapture})=>{
     const [isCameraOn, setIsCameraOn] = useState(false);
     const [aspectRatio, setAspectRatio] = useState('16:9');
     const [isBlinking, setIsBlinking] = useState(false);
+     const [videoDimensions, setVideoDimensions] = useState({ width: 1000, height: 720 });
 
      const checkCameras = async () => {
         try {
@@ -16,7 +17,7 @@ const Camera = ({onCapture})=>{
           const videoDevices = devices.filter(device => device.kind === 'videoinput');
           const hasBackCamera = videoDevices.some(device => device.facing === 'environment');
     
-          // If there's a back camera available, use it
+       
           setFacingMode(hasBackCamera ? 'environment' : 'user');
         } catch (error) {
           console.log('Error checking camera devices:', error);
@@ -40,8 +41,8 @@ const Camera = ({onCapture})=>{
        const constraints = {
         video:{
             facingMode,
-            width : {ideal : 1280},
-            height : {ideal : calculateHeight()},
+             width : {ideal : videoDimensions.width},
+            height : {ideal : videoDimensions.height},
         }
        };
 
@@ -65,18 +66,29 @@ const Camera = ({onCapture})=>{
         }
     }
 
-    const calculateHeight = ()=>{
-        switch(aspectRatio){
-            case '16:9':
-                return 700;
-            case '4:3':
-                return 860;
-            case '1:1':
-                return 1200;
-            default:
-                return 700;
+    const calculateDimensions = (aspectRatio) => {
+        let width = 1000;
+        let height = 720;
+    
+        switch (aspectRatio) {
+          case '16:9':
+            width = 980;
+            height = 720;
+            break;
+          case '4:3':
+            width = 850;
+            height = 720;
+            break;
+          case '1:1':
+            width = 720;
+            height = 720;
+            break;
+          default:
+            break;
         }
-    };
+    
+        setVideoDimensions({ width, height });
+      };
 
     const handleCapture = () => {
         setIsBlinking(true);
@@ -113,23 +125,41 @@ const Camera = ({onCapture})=>{
         }, 500);
       };
 
-    const switchCamera = ()=>{
-        const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
-        setFacingMode(newFacingMode);
-        // stopCamera();
-        startCamera();
+        const switchCamera =async ()=>{
+            const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+            setFacingMode(newFacingMode);
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+              }
+            
+              // Start a new camera stream with the updated facingMode
+              const constraints = {
+                video: {
+                  facingMode: newFacingMode,
+                  width: { ideal: videoDimensions.width },
+                  height: { ideal: videoDimensions.height },
+                },
+              };
+            
+              try {
+                const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+                setStream(newStream);
+              } catch (error) {
+                console.error('Error switching camera:', error);
+              }
     };
 
     const handleAspectRatioChange = (e)=>{
-        setAspectRatio(e.target.value);
+        const newAspectRatio = e.target.value;
+        setAspectRatio(newAspectRatio);
+        calculateDimensions(newAspectRatio)
     }
 
-    // useEffect(()=>{
-    //     if(isCameraOn){
-    //         // stopCamera();
-    //         startCamera();
-    //     }
-    // },[aspectRatio]);
+   useEffect(() => {
+        calculateDimensions(aspectRatio);
+      }, [aspectRatio]);
+
 
     useEffect(() => {
         if (videoRef.current) {
@@ -160,8 +190,9 @@ const Camera = ({onCapture})=>{
             playsInline
             style={{ transform: `${facingMode === 'user' ? 'scaleX(-1)' : 'none'} scale(${zoom})`,
             aspectRatio,
-            width: '100%',
-            height: '100%',
+            width: `${videoDimensions.width}px`,
+            height: `${videoDimensions.height}px`,
+            aspectRatio,
             objectFit: 'contain'
         }}
             className={isBlinking ? 'blink' : ''}
