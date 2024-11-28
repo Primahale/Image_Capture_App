@@ -196,7 +196,7 @@ const Camera = ({onCapture})=>{
       {!isCameraOn ? (
         <button onClick={startCamera} className="start-btn"><img src='https://img.icons8.com/?size=100&id=60708&format=png&color=000000'></img></button>
       ) : (
-        <div className="video-wrapper" style={{ overflow: 'hidden', position: 'relative', width: '100%', height: '100%' }}>
+        <div className="video-wrapper" style={{  position: 'relative', width: '100%', height: '100%' }}>
           <video
             ref={videoRef}
             autoPlay
