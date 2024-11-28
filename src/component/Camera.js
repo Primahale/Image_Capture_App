@@ -9,7 +9,7 @@ const Camera = ({onCapture})=>{
     const [isCameraOn, setIsCameraOn] = useState(false);
     const [aspectRatio, setAspectRatio] = useState('16:9');
     const [isBlinking, setIsBlinking] = useState(false);
-     const [videoDimensions, setVideoDimensions] = useState({ width: 1000, height: 720 });
+     // const [videoDimensions, setVideoDimensions] = useState({ width: 1000, height: 720 });
 
      const checkCameras = async () => {
         try {
@@ -41,15 +41,16 @@ const Camera = ({onCapture})=>{
        const constraints = {
         video:{
             facingMode,
-             width : {ideal : videoDimensions.width},
-            height : {ideal : videoDimensions.height},
+             width : {ideal : 1280},
+            height : {ideal : calculateHeight()},
         }
        };
 
        try{
         const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
         setStream(mediaStream);
-        setIsCameraOn(true)
+        setIsCameraOn(true);
+            await applyZoom(mediaStream, zoom);
        }
        catch(error){
         console.log("Error to Accessing a Camera", error);
@@ -63,31 +64,42 @@ const Camera = ({onCapture})=>{
             stream.getTracks().forEach(track=> track.stop());
             setStream(null);
             setIsCameraOn(false);
+           
         }
     }
 
-    const calculateDimensions = (aspectRatio) => {
-        let width = 1000;
-        let height = 720;
-    
+     const calculateHeight = () => {
         switch (aspectRatio) {
           case '16:9':
-            width = 980;
-            height = 720;
-            break;
+            return 700;
           case '4:3':
-            width = 850;
-            height = 720;
-            break;
+            return 860;
           case '1:1':
-            width = 720;
-            height = 720;
-            break;
+            return 1200;
           default:
-            break;
+            return 700;
         }
-    
-        setVideoDimensions({ width, height });
+      };
+
+     const applyZoom = async (mediaStream, zoomLevel) => {
+        const [track] = mediaStream.getVideoTracks();
+        if ('applyConstraints' in track) {
+          try {
+            await track.applyConstraints({
+              advanced: [{ zoom: zoomLevel }],
+            });
+          } catch (error) {
+            console.log('Zoom is not supported on this device:', error);
+          }
+        }
+      };
+
+      const handleZoomChange = async (e) => {
+        const newZoom = parseFloat(e.target.value);
+        setZoom(newZoom);
+        if (stream) {
+          await applyZoom(stream, newZoom);
+        }
       };
 
     const handleCapture = () => {
@@ -101,20 +113,21 @@ const Camera = ({onCapture})=>{
         const canvasWidth = canvasRef.current.width;
         const canvasHeight = canvasRef.current.height;
       
-        const scaledWidth = videoWidth / zoom;
-        const scaledHeight = videoHeight / zoom;
-        const startX = (videoWidth - scaledWidth) / 2;
-        const startY = (videoHeight - scaledHeight) / 2;
+        // const scaledWidth = videoWidth / zoom;
+        // const scaledHeight = videoHeight / zoom;
+        // const startX = (videoWidth - scaledWidth) / 2;
+        // const startY = (videoHeight - scaledHeight) / 2;
       
         context.clearRect(0, 0, canvasWidth, canvasHeight);
+         context.drawImage(video, 0, 0, canvasWidth, canvasHeight);
       
-        context.drawImage(
-          video,
-          startX, startY,               
-          scaledWidth, scaledHeight,   
-          0, 0,                        
-          canvasWidth, canvasHeight     
-        );
+        // context.drawImage(
+        //   video,
+        //   startX, startY,               
+        //   scaledWidth, scaledHeight,   
+        //   0, 0,                        
+        //   canvasWidth, canvasHeight     
+        // );
       
       
         const imageData = canvasRef.current.toDataURL('image/png');
@@ -137,8 +150,8 @@ const Camera = ({onCapture})=>{
               const constraints = {
                 video: {
                   facingMode: newFacingMode,
-                  width: { ideal: videoDimensions.width },
-                  height: { ideal: videoDimensions.height },
+                  width: { ideal: 1280 },
+                  height: { ideal: calculateHeight() },
                 },
               };
             
@@ -153,11 +166,11 @@ const Camera = ({onCapture})=>{
     const handleAspectRatioChange = (e)=>{
         const newAspectRatio = e.target.value;
         setAspectRatio(newAspectRatio);
-        calculateDimensions(newAspectRatio)
+        calculateHeight(newAspectRatio)
     }
 
    useEffect(() => {
-        calculateDimensions(aspectRatio);
+        calculateHeight(aspectRatio);
       }, [aspectRatio]);
 
 
@@ -190,8 +203,8 @@ const Camera = ({onCapture})=>{
             playsInline
             style={{ transform: `${facingMode === 'user' ? 'scaleX(-1)' : 'none'} scale(${zoom})`,
             aspectRatio,
-            width: `${videoDimensions.width}px`,
-            height: `${videoDimensions.height}px`,
+            width: '100%',
+            // height: '100%',
             aspectRatio,
             objectFit: 'contain'
         }}
@@ -213,7 +226,7 @@ const Camera = ({onCapture})=>{
               max="3"
               step="0.1"
               value={zoom}
-              onChange={(e) => setZoom(e.target.value)}
+              onChange={handleZoomChange}
               data-tooltip="zoom"
             />
             <select onChange={handleAspectRatioChange} value={aspectRatio}>
