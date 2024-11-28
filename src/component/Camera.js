@@ -6,6 +6,7 @@ const Camera = ({onCapture})=>{
     const [stream, setStream] = useState(null);
     const [facingMode, setFacingMode] = useState('user');
     const [zoom, setZoom] = useState(1);
+    const [zoomRange, setZoomRange] = useState({ min: 1, max: 3 }); 
     const [isCameraOn, setIsCameraOn] = useState(false);
     const [aspectRatio, setAspectRatio] = useState('16:9');
     const [isBlinking, setIsBlinking] = useState(false);
@@ -36,8 +37,7 @@ const Camera = ({onCapture})=>{
     
     const startCamera = async()=>{
         if(stream) return;
-    
-
+        
        const constraints = {
         video:{
             facingMode,
@@ -50,14 +50,12 @@ const Camera = ({onCapture})=>{
         const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
         setStream(mediaStream);
         setIsCameraOn(true);
-            await applyZoom(mediaStream, zoom);
+         await applyZoom(mediaStream, zoom);
        }
        catch(error){
         console.log("Error to Accessing a Camera", error);
        }
     };
-
-   
 
     const stopCamera = ()=>{
         if(stream){
@@ -81,18 +79,30 @@ const Camera = ({onCapture})=>{
         }
       };
 
-     const applyZoom = async (mediaStream, zoomLevel) => {
+      const applyZoom = async (mediaStream, zoomLevel) => {
         const [track] = mediaStream.getVideoTracks();
-        if ('applyConstraints' in track) {
+        const capabilities = track.getCapabilities();
+    
+        if ('zoom' in capabilities) {
+          const minZoom = capabilities.zoom.min || 1;
+          const maxZoom = capabilities.zoom.max || 3;
+          setZoomRange({ min: minZoom, max: maxZoom });
+          
+          // Ensure zoom is within range
+          const adjustedZoom = Math.min(Math.max(zoomLevel, minZoom), maxZoom);
+    
           try {
             await track.applyConstraints({
-              advanced: [{ zoom: zoomLevel }],
+              advanced: [{ zoom: adjustedZoom }],
             });
+            setZoom(adjustedZoom);
           } catch (error) {
-            console.log('Zoom is not supported on this device:', error);
+            console.error('Error applying zoom:', error);
           }
+        } else {
+          console.warn('Zoom is not supported on this device.');
         }
-      };
+      }
 
       const handleZoomChange = async (e) => {
         const newZoom = parseFloat(e.target.value);
@@ -119,6 +129,11 @@ const Camera = ({onCapture})=>{
         // const startY = (videoHeight - scaledHeight) / 2;
       
         context.clearRect(0, 0, canvasWidth, canvasHeight);
+        if (facingMode === 'user') {
+            context.translate(canvasWidth, 0);
+            context.scale(-1, 1);
+          }
+        
          context.drawImage(video, 0, 0, canvasWidth, canvasHeight);
       
         // context.drawImage(
@@ -166,15 +181,15 @@ const Camera = ({onCapture})=>{
     const handleAspectRatioChange = (e)=>{
         const newAspectRatio = e.target.value;
         setAspectRatio(newAspectRatio);
-        calculateHeight(newAspectRatio)
+        // calculateHeight(newAspectRatio)
     }
 
-   useEffect(() => {
-        calculateHeight(aspectRatio);
-      }, [aspectRatio]);
+   // useEffect(() => {
+   //      calculateHeight(aspectRatio);
+   //    }, [aspectRatio]);
 
 
-     useEffect(() => {
+      useEffect(() => {
         if (videoRef.current) {
           const { width } = videoRef.current.getBoundingClientRect();
           const heightMap = {
@@ -184,11 +199,12 @@ const Camera = ({onCapture})=>{
           };
           videoRef.current.style.width = `${width}px`;
           videoRef.current.style.height = `${heightMap[aspectRatio]}px`;
-          // Update canvas dimensions to match video aspect ratio
+          
           canvasRef.current.width = width;
           canvasRef.current.height = heightMap[aspectRatio];
         }
       }, [aspectRatio]);
+
 
     return(
         <div className="camera-container">
@@ -221,8 +237,8 @@ const Camera = ({onCapture})=>{
             {/* <button onClick={stopCamera} data-tooltip="Stop Camera"><img src='https://img.icons8.com/?size=30&id=rIlhCoOzIUwg&format=png&color=000000'></img></button> */}
             <input
               type="range"
-              min="1"
-              max="3"
+              min={zoomRange.min}
+              max={zoomRange.max}
               step="0.1"
               value={zoom}
               onChange={handleZoomChange}
