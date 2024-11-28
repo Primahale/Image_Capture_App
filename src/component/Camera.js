@@ -201,7 +201,7 @@ const Camera = ({onCapture})=>{
             ref={videoRef}
             autoPlay
             playsInline
-            style={{ transform: `${facingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)'} scale(${zoom})`,
+            style={{ transform: `${facingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)'} `,
             aspectRatio,
             width: '100%',
             // height: '100%',
