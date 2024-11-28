@@ -174,22 +174,21 @@ const Camera = ({onCapture})=>{
       }, [aspectRatio]);
 
 
-    useEffect(() => {
+     useEffect(() => {
         if (videoRef.current) {
           const { width } = videoRef.current.getBoundingClientRect();
-          if (aspectRatio === '16:9') {
-            videoRef.current.style.width = `${width}px`;
-            videoRef.current.style.height = `${width * (9 / 16)}px`;
-          } else if (aspectRatio === '4:3') {
-            videoRef.current.style.width = `${width}px`;
-            videoRef.current.style.height = `${width * (3 / 4)}px`;
-          } else if (aspectRatio === '1:1') {
-            videoRef.current.style.width = `${width}px`;
-            videoRef.current.style.height = `${width}px`;
-          }
+          const heightMap = {
+            '16:9': width * (9 / 16),
+            '4:3': width * (3 / 4),
+            '1:1': width,
+          };
+          videoRef.current.style.width = `${width}px`;
+          videoRef.current.style.height = `${heightMap[aspectRatio]}px`;
+          // Update canvas dimensions to match video aspect ratio
+          canvasRef.current.width = width;
+          canvasRef.current.height = heightMap[aspectRatio];
         }
       }, [aspectRatio]);
-
 
     return(
         <div className="camera-container">
