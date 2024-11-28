@@ -5,10 +5,20 @@ const Gallary = ({images, onDelete})=>{
     const [selectedImage, setSelctedImage] = useState(null);
     const [filter, setFilter] = useState('none');
 
-    const applyFilter = (index,filterName)=>{
-        setFilter({...filter, [index]:filterName});
+    const applyFilter = (imageUrl,filterName)=>{
+         setFilter((prevFilters) => ({
+            ...prevFilters,
+            [imageUrl]: filterName,
+          }));
         setSelctedImage(null);
     }
+    const handleDelete = (index) => {
+        const imageUrlToDelete = images[index];
+        const updatedFilters = { ...filter };
+        delete updatedFilters[imageUrlToDelete];
+        setFilter(updatedFilters);
+        onDelete(index);
+      };
 
     return(
         <div className="gallery-container">
@@ -23,7 +33,7 @@ const Gallary = ({images, onDelete})=>{
                  style={{filter : filter[index] || 'none'}}
             />
             <div className="btn-div">
-            <button className="delete-button" onClick={() => onDelete(index)}>
+            <button className="delete-button" onClick={() => handleDelete(index)}>
                 <span className="material-icons">delete</span>
             </button>
             <button className="edit-button" onClick={() => setSelctedImage(index)}>Edit</button>
